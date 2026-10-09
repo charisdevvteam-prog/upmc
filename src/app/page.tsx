@@ -27,7 +27,7 @@ export default function Home() {
     <div className="flex min-h-full flex-1 flex-col">
       <SiteHeader />
 
-      <section className="relative isolate flex min-h-svh items-end overflow-hidden bg-black text-white">
+      <section className="relative isolate hero-min-h flex items-end overflow-hidden bg-black text-white">
         <HeroVideo />
         <div className="relative z-10 mx-auto w-full max-w-7xl px-5 pt-32 pb-12 sm:px-8 sm:pt-40 sm:pb-24">
           <Reveal onLoad delay={0.35} className="max-w-4xl">
