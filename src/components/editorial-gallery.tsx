@@ -52,74 +52,129 @@ const sizes = {
 };
 
 const SPEED = 36;
+const RESUME_AFTER = 2500;
+const COPIES = 3;
 
 export function EditorialGallery() {
-  const trackRef = useRef<HTMLDivElement>(null);
-  const offsetRef = useRef(0);
-  const pausedRef = useRef(false);
-  const dragRef = useRef<{ x: number; offset: number } | null>(null);
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const positionRef = useRef(0);
+  const touchingRef = useRef(false);
+  const hoveringRef = useRef(false);
+  const resumeAtRef = useRef(0);
+  const dragRef = useRef<{ x: number; left: number } | null>(null);
 
   useEffect(() => {
-    const track = trackRef.current;
-    if (!track) return;
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
 
     const prefersReduced = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
+
+    const loopWidth = () => {
+      const first = scroller.children[0] as HTMLElement | undefined;
+      const repeat = scroller.children[images.length] as HTMLElement | undefined;
+      return first && repeat ? repeat.offsetLeft - first.offsetLeft : 0;
+    };
+
+    const wrap = (value: number) => {
+      const loop = loopWidth();
+      if (loop <= 0) return value;
+      if (value < loop * 0.5) return value + loop;
+      if (value > loop * 1.5) return value - loop;
+      return value;
+    };
+
+    positionRef.current = loopWidth();
+    scroller.scrollLeft = positionRef.current;
+
+    const holdAuto = () => {
+      resumeAtRef.current = performance.now() + RESUME_AFTER;
+    };
+    const onTouchStart = () => {
+      touchingRef.current = true;
+      holdAuto();
+    };
+    const onTouchEnd = () => {
+      touchingRef.current = false;
+      holdAuto();
+    };
+
+    scroller.addEventListener("touchstart", onTouchStart, { passive: true });
+    scroller.addEventListener("touchend", onTouchEnd, { passive: true });
+    scroller.addEventListener("touchcancel", onTouchEnd, { passive: true });
+    scroller.addEventListener("wheel", holdAuto, { passive: true });
+
     let frame = 0;
     let last = performance.now();
-
-    const render = () => {
-      const first = track.children[0] as HTMLElement | undefined;
-      const repeat = track.children[images.length] as HTMLElement | undefined;
-      const loop = first && repeat ? repeat.offsetLeft - first.offsetLeft : 0;
-      if (loop > 0) {
-        offsetRef.current = ((offsetRef.current % loop) + loop) % loop;
-      }
-      const value = `translate3d(${-offsetRef.current}px, 0, 0)`;
-      track.style.webkitTransform = value;
-      track.style.transform = value;
-    };
 
     const tick = (now: number) => {
       const elapsed = Math.min(now - last, 64);
       last = now;
-      if (!pausedRef.current && !dragRef.current && !prefersReduced) {
-        offsetRef.current += (SPEED * elapsed) / 1000;
+
+      const manual =
+        touchingRef.current ||
+        dragRef.current !== null ||
+        now < resumeAtRef.current;
+
+      if (manual) {
+        positionRef.current = scroller.scrollLeft;
+        if (!touchingRef.current && !dragRef.current) {
+          const wrapped = wrap(scroller.scrollLeft);
+          if (wrapped !== scroller.scrollLeft) {
+            scroller.scrollLeft = wrapped;
+            positionRef.current = wrapped;
+          }
+        }
+      } else if (!hoveringRef.current && !prefersReduced) {
+        positionRef.current = wrap(
+          positionRef.current + (SPEED * elapsed) / 1000,
+        );
+        scroller.scrollLeft = Math.round(positionRef.current);
       }
-      render();
+
       frame = window.requestAnimationFrame(tick);
     };
 
     frame = window.requestAnimationFrame(tick);
-    return () => window.cancelAnimationFrame(frame);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      scroller.removeEventListener("touchstart", onTouchStart);
+      scroller.removeEventListener("touchend", onTouchEnd);
+      scroller.removeEventListener("touchcancel", onTouchEnd);
+      scroller.removeEventListener("wheel", holdAuto);
+    };
   }, []);
 
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
-    dragRef.current = { x: event.clientX, offset: offsetRef.current };
+    if (event.pointerType !== "mouse" || !scrollerRef.current) return;
+    dragRef.current = { x: event.clientX, left: scrollerRef.current.scrollLeft };
   };
 
   const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
     const drag = dragRef.current;
-    if (!drag) return;
-    offsetRef.current = drag.offset - (event.clientX - drag.x);
+    if (!drag || !scrollerRef.current) return;
+    scrollerRef.current.scrollLeft = drag.left - (event.clientX - drag.x);
   };
 
   const endDrag = () => {
+    if (!dragRef.current) return;
     dragRef.current = null;
+    resumeAtRef.current = performance.now() + RESUME_AFTER;
   };
 
-  const frames = [...images, ...images];
+  const frames = Array.from({ length: COPIES }, () => images).flat();
 
   return (
-    <section className="overflow-hidden bg-white py-12 sm:py-24">
+    <section className="bg-white py-12 sm:py-24">
       <div
-        className="cursor-grab touch-pan-y select-none active:cursor-grabbing"
+        ref={scrollerRef}
+        className="gallery-scroller flex cursor-grab items-end gap-4 px-5 select-none active:cursor-grabbing sm:gap-5 sm:px-8"
         onMouseEnter={() => {
-          pausedRef.current = true;
+          hoveringRef.current = true;
         }}
         onMouseLeave={() => {
-          pausedRef.current = false;
+          hoveringRef.current = false;
           endDrag();
         }}
         onPointerDown={onPointerDown}
@@ -127,27 +182,22 @@ export function EditorialGallery() {
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
       >
-        <div
-          ref={trackRef}
-          className="flex w-max items-end gap-4 px-5 will-change-transform sm:gap-5 sm:px-8"
-        >
-          {frames.map((image, index) => (
-            <figure
-              key={`${image.src}-${index}`}
-              aria-hidden={index >= images.length}
-              className={`relative shrink-0 overflow-hidden rounded-2xl ${sizes[image.size]}`}
-            >
-              <Image
-                src={image.src}
-                alt={index >= images.length ? "" : image.alt}
-                fill
-                draggable={false}
-                sizes="(max-width: 768px) 84vw, 40rem"
-                className="pointer-events-none object-cover"
-              />
-            </figure>
-          ))}
-        </div>
+        {frames.map((image, index) => (
+          <figure
+            key={`${image.src}-${index}`}
+            aria-hidden={index >= images.length}
+            className={`relative shrink-0 overflow-hidden rounded-2xl ${sizes[image.size]}`}
+          >
+            <Image
+              src={image.src}
+              alt={index >= images.length ? "" : image.alt}
+              fill
+              draggable={false}
+              sizes="(max-width: 768px) 84vw, 40rem"
+              className="pointer-events-none object-cover"
+            />
+          </figure>
+        ))}
       </div>
     </section>
   );

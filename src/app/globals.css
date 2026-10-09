@@ -109,6 +109,20 @@
   }
 }
 
+.gallery-scroller {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.gallery-scroller::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
 .hero-min-h {
   min-height: 100vh;
   min-height: 100svh;
