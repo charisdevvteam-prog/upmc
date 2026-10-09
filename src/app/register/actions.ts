@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { getSql } from "@/lib/db";
 
 export type RegisterState = {
   error?: string;
@@ -14,16 +15,7 @@ export async function submitRegistration(
   _prev: RegisterState,
   formData: FormData,
 ): Promise<RegisterState> {
-  const url = process.env.GOOGLE_FORM_URL;
-
-  if (!url) {
-    return {
-      error:
-        "The Google form endpoint is not set yet. Add GOOGLE_FORM_URL and try again.",
-    };
-  }
-
-  const payload = {
+  const entry = {
     title: field(formData, "title"),
     name: field(formData, "name"),
     email: field(formData, "email"),
@@ -34,31 +26,34 @@ export async function submitRegistration(
     location: field(formData, "location"),
     days: field(formData, "days"),
     expectations: field(formData, "expectations"),
-    submittedAt: new Date().toISOString(),
   };
 
   if (
-    !payload.title ||
-    !payload.name ||
-    !payload.email ||
-    !payload.phone ||
-    !payload.assembly ||
-    !payload.heard ||
-    !payload.joining ||
-    !payload.location ||
-    !payload.days
+    !entry.title ||
+    !entry.name ||
+    !entry.email ||
+    !entry.phone ||
+    !entry.assembly ||
+    !entry.heard ||
+    !entry.joining ||
+    !entry.location ||
+    !entry.days
   ) {
     return { error: "Please complete the required fields." };
   }
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-    redirect: "follow",
-  });
-
-  if (!response.ok) {
+  try {
+    const sql = getSql();
+    await sql`
+      insert into registrations
+        (title, name, email, phone, assembly, heard, joining, location, days, expectations)
+      values
+        (${entry.title}, ${entry.name}, ${entry.email}, ${entry.phone}, ${entry.assembly},
+         ${entry.heard}, ${entry.joining}, ${entry.location}, ${entry.days},
+         ${entry.expectations || null})
+    `;
+  } catch (error) {
+    console.error("Registration insert failed", error);
     return { error: "Could not submit your registration. Please try again." };
   }
 
