@@ -3,8 +3,10 @@
 import { AnimatePresence, motion } from "motion/react";
 import {
   useActionState,
+  useEffect,
   useState,
   type FormEvent,
+  type InputHTMLAttributes,
   type KeyboardEvent,
 } from "react";
 import { easeLuxe } from "@/components/motion";
@@ -15,10 +17,24 @@ import {
   joiningOptions,
   titles,
 } from "@/lib/content";
+import {
+  formatEmail,
+  formatExpectations,
+  formatName,
+  formatPhone,
+  formatPlace,
+  limits,
+  validateField,
+  type RegistrationErrors,
+  type RegistrationField,
+  type RegistrationInput,
+} from "@/lib/registration";
 import { submitRegistration, type RegisterState } from "./actions";
 
 const fieldClass =
-  "h-14 w-full rounded-2xl border border-zinc-300 bg-white px-5 text-lg tracking-[-0.02em] outline-none transition placeholder:text-zinc-400 focus:border-accent focus:ring-4 focus:ring-accent/25";
+  "h-14 w-full rounded-2xl border bg-white px-5 text-lg tracking-[-0.02em] outline-none transition placeholder:text-zinc-400 focus:ring-4";
+const fieldOk = "border-zinc-300 focus:border-accent focus:ring-accent/25";
+const fieldBad = "border-red-500 focus:border-red-500 focus:ring-red-500/20";
 const labelClass =
   "mb-3 block text-base font-semibold tracking-[-0.02em] text-zinc-950";
 
@@ -32,34 +48,88 @@ const steps = [
   "What are you expecting?",
 ];
 
+const stepFields: RegistrationField[][] = [
+  ["title", "name"],
+  ["email", "phone", "assembly"],
+  ["heard"],
+  ["joining"],
+  ["location"],
+  ["days"],
+  ["expectations"],
+];
+
+const formatters: Partial<Record<RegistrationField, (value: string) => string>> = {
+  name: formatName,
+  email: formatEmail,
+  phone: formatPhone,
+  assembly: formatPlace,
+  location: formatPlace,
+  expectations: formatExpectations,
+};
+
+const emptyValues: RegistrationInput = {
+  title: "",
+  name: "",
+  email: "",
+  phone: "",
+  assembly: "",
+  heard: "",
+  joining: "",
+  location: "",
+  days: "",
+  expectations: "",
+};
+
+function FieldError({ id, message }: { id: string; message?: string }) {
+  if (!message) return null;
+  return (
+    <p id={id} className="mt-2 text-sm font-medium text-red-600">
+      {message}
+    </p>
+  );
+}
+
 function ChoiceBadges({
   value,
   options,
   onChange,
   label,
+  error,
+  errorId,
 }: {
   value: string;
   options: readonly string[];
   onChange: (value: string) => void;
   label: string;
+  error?: string;
+  errorId: string;
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className="flex flex-wrap gap-2.5">
-      {options.map((option) => {
-        const selected = value === option;
-        return (
-          <button
-            key={option}
-            type="button"
-            role="radio"
-            aria-checked={selected}
-            onClick={() => onChange(option)}
-            className={`min-h-11 ${btn({ variant: selected ? "primary" : "outline-primary" })}`}
-          >
-            {option}
-          </button>
-        );
-      })}
+    <div>
+      <div
+        role="radiogroup"
+        aria-label={label}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? errorId : undefined}
+        className="flex flex-wrap gap-2.5"
+      >
+        {options.map((option) => {
+          const selected = value === option;
+          return (
+            <button
+              key={option}
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              onClick={() => onChange(option)}
+              className={`min-h-11 ${btn({ variant: selected ? "primary" : "outline-primary" })}`}
+            >
+              {option}
+            </button>
+          );
+        })}
+      </div>
+      <FieldError id={errorId} message={error} />
     </div>
   );
 }
@@ -70,34 +140,90 @@ export function RegisterForm() {
     {},
   );
   const [step, setStep] = useState(0);
-  const [title, setTitle] = useState("");
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [assembly, setAssembly] = useState("");
-  const [heard, setHeard] = useState("");
-  const [joining, setJoining] = useState("");
-  const [location, setLocation] = useState("");
-  const [days, setDays] = useState("");
-  const [expectations, setExpectations] = useState("");
+  const [values, setValues] = useState<RegistrationInput>(emptyValues);
+  const [errors, setErrors] = useState<RegistrationErrors>({});
 
   const lastStep = steps.length - 1;
-  const canContinue =
-    (step === 0 && title && name.trim()) ||
-    (step === 1 && email.trim() && phone.trim() && assembly.trim()) ||
-    (step === 2 && heard) ||
-    (step === 3 && joining) ||
-    (step === 4 && location.trim()) ||
-    (step === 5 && days);
+
+  useEffect(() => {
+    const serverErrors = state.fieldErrors;
+    if (!serverErrors) return;
+    setErrors(serverErrors);
+    const firstBadStep = stepFields.findIndex((fields) =>
+      fields.some((field) => serverErrors[field]),
+    );
+    if (firstBadStep >= 0) setStep(firstBadStep);
+  }, [state]);
+
+  const setValue = (field: RegistrationField, value: string) => {
+    setValues((current) => ({ ...current, [field]: value }));
+    if (errors[field]) {
+      setErrors((current) => ({
+        ...current,
+        [field]: validateField(field, value),
+      }));
+    }
+  };
+
+  const choose = (field: RegistrationField) => (value: string) => {
+    setValues((current) => ({ ...current, [field]: value }));
+    setErrors((current) => ({ ...current, [field]: undefined }));
+  };
+
+  const finishField = (field: RegistrationField) => {
+    const raw = values[field];
+    const message = validateField(field, raw);
+    const format = formatters[field];
+    if (!message && format && raw) {
+      setValues((current) => ({ ...current, [field]: format(raw) }));
+    }
+    if (raw || errors[field]) {
+      setErrors((current) => ({ ...current, [field]: message }));
+    }
+  };
+
+  const validateStep = (index: number) => {
+    const found: RegistrationErrors = {};
+    for (const field of stepFields[index]) {
+      const message = validateField(field, values[field]);
+      if (message) found[field] = message;
+    }
+    setErrors((current) => ({ ...current, ...found }));
+    const firstBad = stepFields[index].find((field) => found[field]);
+    if (firstBad) {
+      document.getElementById(firstBad)?.focus();
+      return false;
+    }
+    setValues((current) => {
+      const next = { ...current };
+      for (const field of stepFields[index]) {
+        const format = formatters[field];
+        if (format) next[field] = format(next[field]);
+      }
+      return next;
+    });
+    return true;
+  };
 
   const goNext = () => {
-    if (canContinue) setStep((value) => Math.min(value + 1, lastStep));
+    if (validateStep(step)) {
+      setStep((value) => Math.min(value + 1, lastStep));
+    }
   };
 
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     if (step < lastStep) {
       event.preventDefault();
       goNext();
+      return;
+    }
+    const firstBadStep = stepFields.findIndex(
+      (fields) => !fields.every((field) => !validateField(field, values[field])),
+    );
+    if (firstBadStep >= 0) {
+      event.preventDefault();
+      setStep(firstBadStep);
+      validateStep(firstBadStep);
     }
   };
 
@@ -112,18 +238,48 @@ export function RegisterForm() {
     }
   };
 
+  const textInput = (
+    field: "name" | "email" | "phone" | "assembly" | "location",
+    label: string,
+    props: InputHTMLAttributes<HTMLInputElement>,
+  ) => {
+    const errorId = `${field}-error`;
+    return (
+      <div>
+        <label htmlFor={field} className={labelClass}>
+          {label}
+        </label>
+        <input
+          id={field}
+          value={values[field]}
+          onChange={(event) => setValue(field, event.target.value)}
+          onBlur={() => finishField(field)}
+          aria-invalid={errors[field] ? true : undefined}
+          aria-describedby={errors[field] ? errorId : undefined}
+          className={`${fieldClass} ${errors[field] ? fieldBad : fieldOk}`}
+          {...props}
+        />
+        <FieldError id={errorId} message={errors[field]} />
+      </div>
+    );
+  };
+
+  const expectationsLength = values.expectations.length;
+
   return (
-    <form action={action} onSubmit={onSubmit} onKeyDown={onKeyDown}>
-      <input type="hidden" name="title" value={title} />
-      <input type="hidden" name="name" value={name} />
-      <input type="hidden" name="email" value={email} />
-      <input type="hidden" name="phone" value={phone} />
-      <input type="hidden" name="assembly" value={assembly} />
-      <input type="hidden" name="heard" value={heard} />
-      <input type="hidden" name="joining" value={joining} />
-      <input type="hidden" name="location" value={location} />
-      <input type="hidden" name="days" value={days} />
-      <input type="hidden" name="expectations" value={expectations} />
+    <form
+      action={action}
+      onSubmit={onSubmit}
+      onKeyDown={onKeyDown}
+      noValidate
+    >
+      {(Object.keys(values) as RegistrationField[]).map((field) => (
+        <input key={field} type="hidden" name={field} value={values[field]} />
+      ))}
+      <div aria-hidden className="absolute -left-[9999px] h-px w-px overflow-hidden">
+        <label htmlFor="website">Leave this field empty</label>
+        <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" defaultValue="" />
+      </div>
 
       <div className="flex items-center justify-between text-sm font-medium tracking-[-0.02em] text-[#6b6b6b]">
         <span>
@@ -168,114 +324,87 @@ export function RegisterForm() {
                   <p className={labelClass}>Title</p>
                   <ChoiceBadges
                     label="Title"
-                    value={title}
+                    value={values.title}
                     options={titles}
-                    onChange={setTitle}
+                    onChange={choose("title")}
+                    error={errors.title}
+                    errorId="title-error"
                   />
                 </div>
-                <div>
-                  <label htmlFor="name" className={labelClass}>
-                    Name
-                  </label>
-                  <input
-                    id="name"
-                    autoComplete="name"
-                placeholder="e.g. Kwame Mensah"
-                    value={name}
-                    onChange={(event) => setName(event.target.value)}
-                    className={fieldClass}
-                  />
-                </div>
+                {textInput("name", "Full name", {
+                  autoComplete: "name",
+                  autoCapitalize: "words",
+                  placeholder: "e.g. Kwame Mensah",
+                  maxLength: limits.name,
+                })}
               </>
             ) : null}
 
             {step === 1 ? (
               <>
-                <div>
-                  <label htmlFor="email" className={labelClass}>
-                    Email
-                  </label>
-                  <input
-                    id="email"
-                    type="email"
-                    inputMode="email"
-                    autoComplete="email"
-                placeholder="you@example.com"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    className={fieldClass}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="phone" className={labelClass}>
-                    Phone Number
-                  </label>
-                  <input
-                    id="phone"
-                    type="tel"
-                    inputMode="tel"
-                    autoComplete="tel"
-                placeholder="e.g. +233 24 123 4567"
-                    value={phone}
-                    onChange={(event) => setPhone(event.target.value)}
-                    className={fieldClass}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="assembly" className={labelClass}>
-                    Assembly
-                  </label>
-                  <input
-                    id="assembly"
-                placeholder="e.g. The Temple of Charis, North Legon"
-                    value={assembly}
-                    onChange={(event) => setAssembly(event.target.value)}
-                    className={fieldClass}
-                  />
-                </div>
+                {textInput("email", "Email", {
+                  type: "email",
+                  inputMode: "email",
+                  autoComplete: "email",
+                  autoCapitalize: "none",
+                  spellCheck: false,
+                  placeholder: "you@example.com",
+                  maxLength: limits.email,
+                })}
+                {textInput("phone", "Phone Number", {
+                  type: "tel",
+                  inputMode: "tel",
+                  autoComplete: "tel",
+                  placeholder: "e.g. +233 24 123 4567",
+                  maxLength: 20,
+                })}
+                {textInput("assembly", "Assembly", {
+                  autoCapitalize: "words",
+                  placeholder: "e.g. The Temple of Charis, North Legon",
+                  maxLength: limits.assembly,
+                })}
               </>
             ) : null}
 
             {step === 2 ? (
               <ChoiceBadges
                 label={steps[2]}
-                value={heard}
+                value={values.heard}
                 options={hearAboutOptions}
-                onChange={setHeard}
+                onChange={choose("heard")}
+                error={errors.heard}
+                errorId="heard-error"
               />
             ) : null}
 
             {step === 3 ? (
               <ChoiceBadges
                 label={steps[3]}
-                value={joining}
+                value={values.joining}
                 options={joiningOptions}
-                onChange={setJoining}
+                onChange={choose("joining")}
+                error={errors.joining}
+                errorId="joining-error"
               />
             ) : null}
 
-            {step === 4 ? (
-              <div>
-                <label htmlFor="location" className={labelClass}>
-                  Location
-                </label>
-                <input
-                  id="location"
-                  autoComplete="address-level2"
-              placeholder="e.g. Accra, Ghana"
-                  value={location}
-                  onChange={(event) => setLocation(event.target.value)}
-                  className={fieldClass}
-                />
-              </div>
-            ) : null}
+            {step === 4
+              ? textInput("location", "Location", {
+                  autoComplete: "address-level2",
+                  autoCapitalize: "words",
+                  placeholder: "e.g. Accra, Ghana",
+                  maxLength: limits.location,
+                })
+              : null}
 
             {step === 5 ? (
               <ChoiceBadges
                 label={steps[5]}
-                value={days}
+                value={values.days}
                 options={daysAttending}
-                onChange={setDays}
+                onChange={choose("days")}
+                error={errors.days}
+                errorId="days-error"
               />
             ) : null}
 
@@ -286,11 +415,22 @@ export function RegisterForm() {
                 </label>
                 <textarea
                   id="expectations"
-                  value={expectations}
-                  onChange={(event) => setExpectations(event.target.value)}
+                  value={values.expectations}
+                  onChange={(event) => setValue("expectations", event.target.value)}
+                  onBlur={() => finishField("expectations")}
+                  maxLength={limits.expectations}
                   rows={5}
-                  className="w-full rounded-2xl border border-zinc-300 bg-white px-5 py-4 text-lg tracking-[-0.02em] outline-none transition focus:border-accent focus:ring-4 focus:ring-accent/25"
+                  aria-invalid={errors.expectations ? true : undefined}
+                  aria-describedby="expectations-count"
+                  className={`w-full rounded-2xl border bg-white px-5 py-4 text-lg tracking-[-0.02em] outline-none transition focus:ring-4 ${errors.expectations ? fieldBad : fieldOk}`}
                 />
+                <p
+                  id="expectations-count"
+                  className="mt-2 text-right text-sm text-[#6b6b6b]"
+                >
+                  {expectationsLength}/{limits.expectations}
+                </p>
+                <FieldError id="expectations-error" message={errors.expectations} />
               </div>
             ) : null}
           </div>
@@ -298,7 +438,10 @@ export function RegisterForm() {
       </AnimatePresence>
 
       {state.error ? (
-        <p role="alert" className="mt-6 text-base text-red-600">
+        <p
+          role="alert"
+          className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-base text-red-700"
+        >
           {state.error}
         </p>
       ) : null}
@@ -318,7 +461,6 @@ export function RegisterForm() {
           <button
             key="continue"
             type="button"
-            disabled={!canContinue}
             onClick={goNext}
             className={`flex-1 sm:flex-none ${btn({ variant: "primary", size: "lg" })}`}
           >
