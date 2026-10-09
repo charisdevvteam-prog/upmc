@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import { Reveal, RevealGroup, RevealItem } from "@/components/motion";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { church } from "@/lib/content";
@@ -26,24 +27,35 @@ export default function RegisterPage() {
             className="object-cover opacity-45"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/50" />
-          <div className="relative flex min-h-[12rem] flex-col justify-end px-5 pt-12 pb-8 sm:min-h-[30rem] sm:pb-10 sm:px-8 lg:h-full lg:pb-16">
-            <p className="text-xl leading-[0.9] font-medium tracking-[-0.04em] sm:text-[1.875rem]">
-              Join us
-            </p>
-            <h1 className="mt-4 text-[clamp(2.75rem,11vw,4.5rem)] leading-[0.9] font-semibold tracking-[-0.04em] text-accent lg:text-[clamp(2.75rem,5vw,4.5rem)]">
-              Register for {church.shortName}
-            </h1>
-            <p className="mt-5 hidden max-w-md text-lg sm:block leading-[1.25] tracking-[-0.03em] text-white/80 sm:text-xl">
-              {church.conference}. In person or online, Saturday, Sunday, or
-              both.
-            </p>
-          </div>
+          <RevealGroup
+            onLoad
+            delay={0.2}
+            stagger={0.18}
+            className="relative flex min-h-[12rem] flex-col justify-end px-5 pt-12 pb-8 sm:min-h-[30rem] sm:px-8 sm:pb-10 lg:h-full lg:pb-16"
+          >
+            <RevealItem>
+              <p className="text-xl leading-[0.9] font-medium tracking-[-0.04em] sm:text-[1.875rem]">
+                Join us
+              </p>
+            </RevealItem>
+            <RevealItem>
+              <h1 className="mt-4 text-[clamp(2.75rem,11vw,4.5rem)] leading-[0.9] font-semibold tracking-[-0.04em] text-accent lg:text-[clamp(2.75rem,5vw,4.5rem)]">
+                Register for {church.shortName}
+              </h1>
+            </RevealItem>
+            <RevealItem>
+              <p className="mt-5 hidden max-w-md text-lg leading-[1.25] tracking-[-0.03em] text-white/80 sm:block sm:text-xl">
+                {church.conference}. In person or online, Saturday, Sunday, or
+                both.
+              </p>
+            </RevealItem>
+          </RevealGroup>
         </section>
 
         <section className="px-5 py-10 sm:px-8 sm:py-16 lg:flex lg:items-center lg:px-16 lg:py-24">
-          <div className="mx-auto w-full max-w-xl">
+          <Reveal onLoad delay={0.6} className="mx-auto w-full max-w-xl">
             <RegisterForm />
-          </div>
+          </Reveal>
         </section>
       </main>
 

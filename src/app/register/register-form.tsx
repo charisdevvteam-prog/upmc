@@ -1,6 +1,9 @@
 "use client";
 
+import { AnimatePresence, motion } from "motion/react";
 import { useActionState, useState } from "react";
+import { easeLuxe } from "@/components/motion";
+import { btn } from "@/lib/btn";
 import {
   daysAttending,
   hearAboutOptions,
@@ -46,11 +49,7 @@ function ChoiceBadges({
             role="radio"
             aria-checked={selected}
             onClick={() => onChange(option)}
-            className={
-              selected
-                ? "min-h-12 rounded-full border border-accent bg-accent px-5 text-base font-semibold tracking-[-0.02em] text-zinc-950"
-                : "min-h-12 rounded-full border border-zinc-300 bg-white px-5 text-base font-medium tracking-[-0.02em] text-zinc-700 transition hover:border-accent hover:text-zinc-950"
-            }
+            className={`min-h-11 ${btn({ variant: selected ? "primary" : "outline-primary" })}`}
           >
             {option}
           </button>
@@ -106,144 +105,165 @@ export function RegisterForm() {
         <span>{Math.round(((step + 1) / steps.length) * 100)}%</span>
       </div>
       <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-zinc-100">
-        <div
-          className="h-full rounded-full bg-accent transition-[width] duration-500"
-          style={{ width: `${((step + 1) / steps.length) * 100}%` }}
+        <motion.div
+          className="h-full rounded-full bg-accent"
+          initial={false}
+          animate={{ width: `${((step + 1) / steps.length) * 100}%` }}
+          transition={{ duration: 1.1, ease: easeLuxe }}
         />
       </div>
 
-      <h2 className="mt-8 text-[2rem] leading-[0.95] sm:mt-10 font-semibold tracking-[-0.04em] text-zinc-950 sm:text-[2.6875rem]">
-        {steps[step]}
-      </h2>
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={step}
+          initial={{ opacity: 0, y: 28, filter: "blur(6px)" }}
+          animate={{
+            opacity: 1,
+            y: 0,
+            filter: "blur(0px)",
+            transition: { duration: 0.9, ease: easeLuxe },
+          }}
+          exit={{
+            opacity: 0,
+            y: -16,
+            filter: "blur(6px)",
+            transition: { duration: 0.45, ease: [0.7, 0, 0.84, 0] },
+          }}
+        >
+          <h2 className="mt-8 text-[2rem] leading-[0.95] font-semibold tracking-[-0.04em] text-zinc-950 sm:mt-10 sm:text-[2.6875rem]">
+            {steps[step]}
+          </h2>
 
-      <div className="mt-6 grid gap-6 sm:mt-8">
-        {step === 0 ? (
-          <>
-            <div>
-              <p className={labelClass}>Title</p>
+          <div className="mt-6 grid gap-6 sm:mt-8">
+            {step === 0 ? (
+              <>
+                <div>
+                  <p className={labelClass}>Title</p>
+                  <ChoiceBadges
+                    label="Title"
+                    value={title}
+                    options={titles}
+                    onChange={setTitle}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="name" className={labelClass}>
+                    Name
+                  </label>
+                  <input
+                    id="name"
+                    autoComplete="name"
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    className={fieldClass}
+                  />
+                </div>
+              </>
+            ) : null}
+
+            {step === 1 ? (
+              <>
+                <div>
+                  <label htmlFor="email" className={labelClass}>
+                    Email
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    inputMode="email"
+                    autoComplete="email"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    className={fieldClass}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="phone" className={labelClass}>
+                    Phone Number
+                  </label>
+                  <input
+                    id="phone"
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    value={phone}
+                    onChange={(event) => setPhone(event.target.value)}
+                    className={fieldClass}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="assembly" className={labelClass}>
+                    Assembly
+                  </label>
+                  <input
+                    id="assembly"
+                    value={assembly}
+                    onChange={(event) => setAssembly(event.target.value)}
+                    className={fieldClass}
+                  />
+                </div>
+              </>
+            ) : null}
+
+            {step === 2 ? (
               <ChoiceBadges
-                label="Title"
-                value={title}
-                options={titles}
-                onChange={setTitle}
+                label={steps[2]}
+                value={heard}
+                options={hearAboutOptions}
+                onChange={setHeard}
               />
-            </div>
-            <div>
-              <label htmlFor="name" className={labelClass}>
-                Name
-              </label>
-              <input
-                id="name"
-                autoComplete="name"
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                className={fieldClass}
-              />
-            </div>
-          </>
-        ) : null}
+            ) : null}
 
-        {step === 1 ? (
-          <>
-            <div>
-              <label htmlFor="email" className={labelClass}>
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                inputMode="email"
-                autoComplete="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                className={fieldClass}
+            {step === 3 ? (
+              <ChoiceBadges
+                label={steps[3]}
+                value={joining}
+                options={joiningOptions}
+                onChange={setJoining}
               />
-            </div>
-            <div>
-              <label htmlFor="phone" className={labelClass}>
-                Phone Number
-              </label>
-              <input
-                id="phone"
-                type="tel"
-                inputMode="tel"
-                autoComplete="tel"
-                value={phone}
-                onChange={(event) => setPhone(event.target.value)}
-                className={fieldClass}
+            ) : null}
+
+            {step === 4 ? (
+              <div>
+                <label htmlFor="location" className={labelClass}>
+                  Location
+                </label>
+                <input
+                  id="location"
+                  autoComplete="address-level2"
+                  value={location}
+                  onChange={(event) => setLocation(event.target.value)}
+                  className={fieldClass}
+                />
+              </div>
+            ) : null}
+
+            {step === 5 ? (
+              <ChoiceBadges
+                label={steps[5]}
+                value={days}
+                options={daysAttending}
+                onChange={setDays}
               />
-            </div>
-            <div>
-              <label htmlFor="assembly" className={labelClass}>
-                Assembly
-              </label>
-              <input
-                id="assembly"
-                value={assembly}
-                onChange={(event) => setAssembly(event.target.value)}
-                className={fieldClass}
-              />
-            </div>
-          </>
-        ) : null}
+            ) : null}
 
-        {step === 2 ? (
-          <ChoiceBadges
-            label={steps[2]}
-            value={heard}
-            options={hearAboutOptions}
-            onChange={setHeard}
-          />
-        ) : null}
-
-        {step === 3 ? (
-          <ChoiceBadges
-            label={steps[3]}
-            value={joining}
-            options={joiningOptions}
-            onChange={setJoining}
-          />
-        ) : null}
-
-        {step === 4 ? (
-          <div>
-            <label htmlFor="location" className={labelClass}>
-              Location
-            </label>
-            <input
-              id="location"
-              autoComplete="address-level2"
-              value={location}
-              onChange={(event) => setLocation(event.target.value)}
-              className={fieldClass}
-            />
+            {step === 6 ? (
+              <div>
+                <label htmlFor="expectations" className={labelClass}>
+                  Expectations <span className="font-normal text-[#6b6b6b]">(optional)</span>
+                </label>
+                <textarea
+                  id="expectations"
+                  value={expectations}
+                  onChange={(event) => setExpectations(event.target.value)}
+                  rows={5}
+                  className="w-full rounded-2xl border border-zinc-300 bg-white px-5 py-4 text-lg tracking-[-0.02em] outline-none transition focus:border-accent focus:ring-4 focus:ring-accent/25"
+                />
+              </div>
+            ) : null}
           </div>
-        ) : null}
-
-        {step === 5 ? (
-          <ChoiceBadges
-            label={steps[5]}
-            value={days}
-            options={daysAttending}
-            onChange={setDays}
-          />
-        ) : null}
-
-        {step === 6 ? (
-          <div>
-            <label htmlFor="expectations" className={labelClass}>
-              Expectations <span className="font-normal text-[#6b6b6b]">(optional)</span>
-            </label>
-            <textarea
-              id="expectations"
-              value={expectations}
-              onChange={(event) => setExpectations(event.target.value)}
-              rows={5}
-              className="w-full rounded-2xl border border-zinc-300 bg-white px-5 py-4 text-lg tracking-[-0.02em] outline-none transition focus:border-accent focus:ring-4 focus:ring-accent/25"
-            />
-          </div>
-        ) : null}
-      </div>
+        </motion.div>
+      </AnimatePresence>
 
       {state.error ? (
         <p role="alert" className="mt-6 text-base text-red-600">
@@ -256,7 +276,7 @@ export function RegisterForm() {
           <button
             type="button"
             onClick={() => setStep((value) => value - 1)}
-            className="inline-flex h-14 items-center justify-center rounded-full border border-zinc-300 px-6 text-base font-semibold tracking-[-0.02em] transition hover:border-zinc-950"
+            className={btn({ variant: "outline-secondary", size: "lg" })}
           >
             Back
           </button>
@@ -267,7 +287,7 @@ export function RegisterForm() {
             type="button"
             disabled={!canContinue}
             onClick={() => setStep((value) => value + 1)}
-            className="inline-flex h-14 flex-1 items-center justify-center rounded-full bg-zinc-950 px-8 text-base font-semibold tracking-[-0.02em] text-white transition hover:bg-zinc-800 disabled:opacity-35 sm:flex-none"
+            className={`flex-1 sm:flex-none ${btn({ variant: "primary", size: "lg" })}`}
           >
             Continue
           </button>
@@ -275,7 +295,7 @@ export function RegisterForm() {
           <button
             type="submit"
             disabled={pending}
-            className="inline-flex h-14 flex-1 items-center justify-center rounded-full bg-zinc-950 px-8 text-base font-semibold tracking-[-0.02em] text-white transition hover:bg-zinc-800 disabled:opacity-60 sm:flex-none"
+            className={`flex-1 sm:flex-none ${btn({ variant: "primary", size: "lg" })}`}
           >
             {pending ? "Submitting…" : "Submit registration"}
           </button>

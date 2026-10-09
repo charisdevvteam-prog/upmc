@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { btn } from "@/lib/btn";
 import { church } from "@/lib/content";
 
 export const metadata: Metadata = {
@@ -26,7 +27,7 @@ export default function ThankYouPage() {
         </p>
         <Link
           href="/"
-          className="mt-10 inline-flex h-14 w-full items-center justify-center rounded-full bg-zinc-950 px-8 text-base font-semibold tracking-[-0.02em] text-white transition hover:bg-zinc-800 sm:w-fit"
+          className={`mt-10 w-full sm:w-fit ${btn({ variant: "primary", size: "lg" })}`}
         >
           Back to home
         </Link>
