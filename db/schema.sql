@@ -13,6 +13,9 @@ create table if not exists registrations (
   created_at timestamptz not null default now()
 );
 
+alter table registrations add column if not exists reg_no text
+  generated always as (lpad(id::text, 3, '0')) stored;
+
 alter table registrations drop constraint if exists registrations_title_check;
 alter table registrations add constraint registrations_title_check
   check (title in ('Mr', 'Mrs', 'Miss', 'Ms', 'Pastor', 'Rev', 'Minister'));
