@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type PointerEvent } from "react";
 
 const images = [
   {
@@ -47,31 +47,47 @@ const images = [
 ] as const;
 
 const sizes = {
-  tall: "h-[min(52svh,26rem)] w-[min(68vw,22rem)] sm:h-[64svh] sm:w-[24rem]",
-  wide: "h-[min(36svh,18rem)] w-[min(84vw,36rem)] sm:h-[48svh] sm:w-[40rem]",
+  tall: "h-[min(52vh,26rem)] w-[min(68vw,22rem)] sm:h-[64vh] sm:w-[24rem]",
+  wide: "h-[min(36vh,18rem)] w-[min(84vw,36rem)] sm:h-[48vh] sm:w-[40rem]",
 };
 
+const SPEED = 36;
+
 export function EditorialGallery() {
-  const scrollerRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const offsetRef = useRef(0);
   const pausedRef = useRef(false);
+  const dragRef = useRef<{ x: number; offset: number } | null>(null);
 
   useEffect(() => {
-    const scroller = scrollerRef.current;
-    if (!scroller) return;
+    const track = trackRef.current;
+    if (!track) return;
 
-    let frame = 0;
     const prefersReduced = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
+    let frame = 0;
+    let last = performance.now();
 
-    const tick = () => {
-      if (!pausedRef.current && !prefersReduced) {
-        const loopAt = scroller.scrollWidth / 2;
-        scroller.scrollLeft += 0.6;
-        if (scroller.scrollLeft >= loopAt) {
-          scroller.scrollLeft -= loopAt;
-        }
+    const render = () => {
+      const first = track.children[0] as HTMLElement | undefined;
+      const repeat = track.children[images.length] as HTMLElement | undefined;
+      const loop = first && repeat ? repeat.offsetLeft - first.offsetLeft : 0;
+      if (loop > 0) {
+        offsetRef.current = ((offsetRef.current % loop) + loop) % loop;
       }
+      const value = `translate3d(${-offsetRef.current}px, 0, 0)`;
+      track.style.webkitTransform = value;
+      track.style.transform = value;
+    };
+
+    const tick = (now: number) => {
+      const elapsed = Math.min(now - last, 64);
+      last = now;
+      if (!pausedRef.current && !dragRef.current && !prefersReduced) {
+        offsetRef.current += (SPEED * elapsed) / 1000;
+      }
+      render();
       frame = window.requestAnimationFrame(tick);
     };
 
@@ -79,41 +95,59 @@ export function EditorialGallery() {
     return () => window.cancelAnimationFrame(frame);
   }, []);
 
-  const pause = () => {
-    pausedRef.current = true;
+  const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    dragRef.current = { x: event.clientX, offset: offsetRef.current };
   };
-  const resume = () => {
-    pausedRef.current = false;
+
+  const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current;
+    if (!drag) return;
+    offsetRef.current = drag.offset - (event.clientX - drag.x);
+  };
+
+  const endDrag = () => {
+    dragRef.current = null;
   };
 
   const frames = [...images, ...images];
 
   return (
-    <section className="bg-white py-12 sm:py-24">
+    <section className="overflow-hidden bg-white py-12 sm:py-24">
       <div
-        ref={scrollerRef}
-        className="editorial-scroller flex items-end gap-4 px-5 pb-2 sm:gap-5 sm:px-8"
-        onMouseEnter={pause}
-        onMouseLeave={resume}
-        onPointerDown={pause}
-        onPointerUp={resume}
-        onTouchStart={pause}
-        onTouchEnd={resume}
+        className="cursor-grab touch-pan-y select-none active:cursor-grabbing"
+        onMouseEnter={() => {
+          pausedRef.current = true;
+        }}
+        onMouseLeave={() => {
+          pausedRef.current = false;
+          endDrag();
+        }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
       >
-        {frames.map((image, index) => (
-          <figure
-            key={`${image.src}-${index}`}
-            className={`relative shrink-0 snap-start overflow-hidden rounded-2xl ${sizes[image.size]}`}
-          >
-            <Image
-              src={image.src}
-              alt={image.alt}
-              fill
-              sizes="(max-width: 768px) 80vw, 40rem"
-              className="object-cover"
-            />
-          </figure>
-        ))}
+        <div
+          ref={trackRef}
+          className="flex w-max items-end gap-4 px-5 will-change-transform sm:gap-5 sm:px-8"
+        >
+          {frames.map((image, index) => (
+            <figure
+              key={`${image.src}-${index}`}
+              aria-hidden={index >= images.length}
+              className={`relative shrink-0 overflow-hidden rounded-2xl ${sizes[image.size]}`}
+            >
+              <Image
+                src={image.src}
+                alt={index >= images.length ? "" : image.alt}
+                fill
+                draggable={false}
+                sizes="(max-width: 768px) 84vw, 40rem"
+                className="pointer-events-none object-cover"
+              />
+            </figure>
+          ))}
+        </div>
       </div>
     </section>
   );
