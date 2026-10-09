@@ -87,12 +87,12 @@ export default function Home() {
           <RevealGroup stagger={0.2}>
             <RevealItem>
               <p className="text-xl leading-[1.2] tracking-[-0.04em] text-[#6b6b6b] sm:text-2xl">
-                {conferenceIntro}
+                {churchAbout}
               </p>
             </RevealItem>
             <RevealItem>
-              <p className="mt-6 text-base leading-[1.5] tracking-[-0.02em] text-[#454545] sm:text-lg">
-                {churchAbout}
+              <p className="mt-6 text-xl leading-[1.2] tracking-[-0.04em] text-[#6b6b6b] sm:text-2xl">
+                {conferenceIntro}
               </p>
             </RevealItem>
           </RevealGroup>
