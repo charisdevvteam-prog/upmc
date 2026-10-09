@@ -1,7 +1,12 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { useActionState, useState } from "react";
+import {
+  useActionState,
+  useState,
+  type FormEvent,
+  type KeyboardEvent,
+} from "react";
 import { easeLuxe } from "@/components/motion";
 import { btn } from "@/lib/btn";
 import {
@@ -85,8 +90,30 @@ export function RegisterForm() {
     (step === 4 && location.trim()) ||
     (step === 5 && days);
 
+  const goNext = () => {
+    if (canContinue) setStep((value) => Math.min(value + 1, lastStep));
+  };
+
+  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
+    if (step < lastStep) {
+      event.preventDefault();
+      goNext();
+    }
+  };
+
+  const onKeyDown = (event: KeyboardEvent<HTMLFormElement>) => {
+    if (
+      event.key === "Enter" &&
+      event.target instanceof HTMLInputElement &&
+      step < lastStep
+    ) {
+      event.preventDefault();
+      goNext();
+    }
+  };
+
   return (
-    <form action={action}>
+    <form action={action} onSubmit={onSubmit} onKeyDown={onKeyDown}>
       <input type="hidden" name="title" value={title} />
       <input type="hidden" name="name" value={name} />
       <input type="hidden" name="email" value={email} />
@@ -153,6 +180,7 @@ export function RegisterForm() {
                   <input
                     id="name"
                     autoComplete="name"
+                placeholder="e.g. Kwame Mensah"
                     value={name}
                     onChange={(event) => setName(event.target.value)}
                     className={fieldClass}
@@ -172,6 +200,7 @@ export function RegisterForm() {
                     type="email"
                     inputMode="email"
                     autoComplete="email"
+                placeholder="you@example.com"
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
                     className={fieldClass}
@@ -186,6 +215,7 @@ export function RegisterForm() {
                     type="tel"
                     inputMode="tel"
                     autoComplete="tel"
+                placeholder="e.g. +233 24 123 4567"
                     value={phone}
                     onChange={(event) => setPhone(event.target.value)}
                     className={fieldClass}
@@ -197,6 +227,7 @@ export function RegisterForm() {
                   </label>
                   <input
                     id="assembly"
+                placeholder="e.g. The Temple of Charis, North Legon"
                     value={assembly}
                     onChange={(event) => setAssembly(event.target.value)}
                     className={fieldClass}
@@ -231,6 +262,7 @@ export function RegisterForm() {
                 <input
                   id="location"
                   autoComplete="address-level2"
+              placeholder="e.g. Accra, Ghana"
                   value={location}
                   onChange={(event) => setLocation(event.target.value)}
                   className={fieldClass}
@@ -284,15 +316,17 @@ export function RegisterForm() {
 
         {step < lastStep ? (
           <button
+            key="continue"
             type="button"
             disabled={!canContinue}
-            onClick={() => setStep((value) => value + 1)}
+            onClick={goNext}
             className={`flex-1 sm:flex-none ${btn({ variant: "primary", size: "lg" })}`}
           >
             Continue
           </button>
         ) : (
           <button
+            key="submit"
             type="submit"
             disabled={pending}
             className={`flex-1 sm:flex-none ${btn({ variant: "primary", size: "lg" })}`}
