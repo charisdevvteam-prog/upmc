@@ -30,7 +30,7 @@ export default function Home() {
       <section className="relative isolate hero-min-h flex items-end overflow-hidden bg-black text-white">
         <HeroVideo />
         <div className="relative z-10 mx-auto w-full max-w-7xl px-5 pt-32 pb-12 sm:px-8 sm:pt-40 sm:pb-24">
-          <Reveal onLoad delay={0.35} className="max-w-4xl">
+          <Reveal immediate delay={0.35} className="max-w-4xl">
             <h1>
               <Image
                 src="/images/upmc-wordmark.png"
@@ -42,14 +42,14 @@ export default function Home() {
               />
             </h1>
           </Reveal>
-          <Reveal onLoad delay={0.75}>
+          <Reveal immediate delay={0.75}>
             <p className="mt-6 max-w-2xl text-xl leading-[1.2] tracking-[-0.04em] text-white/85 sm:text-[1.875rem]">
               We can&apos;t wait to gather with you. Come into the full and exact
               knowledge of Jesus Christ.
             </p>
           </Reveal>
           <RevealGroup
-            onLoad
+            immediate
             delay={1.05}
             stagger={0.12}
             className="mt-8 flex flex-col gap-3 sm:mt-10 sm:flex-row"

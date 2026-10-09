@@ -40,24 +40,24 @@ const imageReveal: Variants = {
   }),
 };
 
-function trigger(onLoad: boolean) {
-  return onLoad
+function trigger(immediate: boolean) {
+  return immediate
     ? ({ animate: "visible" } as const)
     : ({ whileInView: "visible", viewport } as const);
 }
 
 type RevealProps = HTMLMotionProps<"div"> & {
   delay?: number;
-  onLoad?: boolean;
+  immediate?: boolean;
 };
 
-export function Reveal({ delay, onLoad = false, ...props }: RevealProps) {
+export function Reveal({ delay, immediate = false, ...props }: RevealProps) {
   return (
     <motion.div
       variants={fadeUp}
       custom={delay}
       initial="hidden"
-      {...trigger(onLoad)}
+      {...trigger(immediate)}
       {...props}
     />
   );
@@ -65,7 +65,7 @@ export function Reveal({ delay, onLoad = false, ...props }: RevealProps) {
 
 export function RevealImage({
   delay,
-  onLoad = false,
+  immediate = false,
   ...props
 }: RevealProps) {
   return (
@@ -73,7 +73,7 @@ export function RevealImage({
       variants={imageReveal}
       custom={delay}
       initial="hidden"
-      {...trigger(onLoad)}
+      {...trigger(immediate)}
       {...props}
     />
   );
@@ -82,13 +82,13 @@ export function RevealImage({
 export function RevealGroup({
   stagger = 0.14,
   delay,
-  onLoad = false,
+  immediate = false,
   ...props
 }: RevealProps & { stagger?: number }) {
   return (
     <motion.div
       initial="hidden"
-      {...trigger(onLoad)}
+      {...trigger(immediate)}
       variants={{
         hidden: {},
         visible: {

@@ -28,7 +28,7 @@ export default function RegisterPage() {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/50" />
           <RevealGroup
-            onLoad
+            immediate
             delay={0.2}
             stagger={0.18}
             className="relative flex min-h-[12rem] flex-col justify-end px-5 pt-12 pb-8 sm:min-h-[30rem] sm:px-8 sm:pb-10 lg:h-full lg:pb-16"
@@ -53,7 +53,7 @@ export default function RegisterPage() {
         </section>
 
         <section className="px-5 py-10 sm:px-8 sm:py-16 lg:flex lg:items-center lg:px-16 lg:py-24">
-          <Reveal onLoad delay={0.6} className="mx-auto w-full max-w-xl">
+          <Reveal immediate delay={0.6} className="mx-auto w-full max-w-xl">
             <RegisterForm />
           </Reveal>
         </section>
