@@ -33,10 +33,10 @@ export default function Home() {
           <Reveal immediate delay={0.35} className="max-w-4xl">
             <h1>
               <Image
-                src="/images/upmc-wordmark.png"
+                src="/images/upmc-wordmark-blue.png"
                 alt="Unto a Perfect Man Conference"
                 width={1024}
-                height={432}
+                height={307}
                 preload
                 className="h-auto w-full max-w-3xl"
               />
