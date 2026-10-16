@@ -16,6 +16,7 @@ import {
   church,
   churchAbout,
   conferenceIntro,
+  conferenceSchedule,
   mission,
   purpose,
   testimonials,
@@ -46,6 +47,9 @@ export default function Home() {
             <p className="mt-6 max-w-2xl text-xl leading-[1.2] tracking-[-0.04em] text-white/85 sm:text-[1.875rem]">
               We can&apos;t wait to gather with you. Come into the full and exact
               knowledge of Jesus Christ.
+            </p>
+            <p className="mt-4 max-w-2xl text-lg leading-[1.2] tracking-[-0.04em] text-white/70 sm:text-xl">
+              {conferenceSchedule.summary}
             </p>
           </Reveal>
           <RevealGroup
@@ -218,8 +222,8 @@ export default function Home() {
           />
           <Reveal delay={0.35}>
             <p className="max-w-2xl text-xl leading-[1.2] tracking-[-0.04em] text-white/80 sm:text-[1.875rem]">
-              Reserve your place in person or online. Saturday, Sunday, or
-              both.
+              {conferenceSchedule.summary}. Reserve your place in person or
+              online. Saturday, Sunday, or both.
             </p>
           </Reveal>
           <Reveal delay={0.55} className="flex flex-col sm:block">

@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     default: `${church.shortName} | ${church.conference}`,
     template: `%s | ${church.shortName}`,
   },
-  description: `${church.conference} — ${church.tagline}. ${church.name}.`,
+  description: `${church.conference}. ${church.tagline}. ${church.name}.`,
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

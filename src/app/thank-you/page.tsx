@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { AddToCalendarButton } from "@/components/add-to-calendar";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { btn } from "@/lib/btn";
-import { church } from "@/lib/content";
+import { church, conferenceSchedule } from "@/lib/content";
 
 export const metadata: Metadata = {
   title: "Thank You",
@@ -23,14 +24,21 @@ export default function ThankYouPage() {
         </h1>
         <p className="mt-6 max-w-xl text-xl leading-[1.2] tracking-[-0.04em] text-[#6b6b6b] sm:text-[1.875rem]">
           Your registration was successful. We can&apos;t wait to see you at{" "}
-          {church.shortName}.
+          {church.shortName} on {conferenceSchedule.summary}.
         </p>
-        <Link
-          href="/"
-          className={`mt-10 w-full sm:w-fit ${btn({ variant: "primary", size: "lg" })}`}
-        >
-          Back to home
-        </Link>
+        <p className="mt-4 max-w-xl text-base leading-[1.4] tracking-[-0.02em] text-[#6b6b6b] sm:text-lg">
+          This opens your calendar with the conference details. Tap Save to add
+          it. Both days are included (Saturday and Sunday, 3:00 PM).
+        </p>
+        <div className="mt-10 flex w-full flex-col gap-3 sm:w-fit sm:flex-row">
+          <AddToCalendarButton />
+          <Link
+            href="/"
+            className={btn({ variant: "outline-secondary", size: "lg" })}
+          >
+            Back to home
+          </Link>
+        </div>
       </main>
       <SiteFooter />
     </div>

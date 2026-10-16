@@ -11,6 +11,32 @@ export const church = {
   pastor: "Pastor Roy King Grace",
 };
 
+/** UPMC 2026: Saturday 7 & Sunday 8 November, from 3:00 PM (Africa/Accra). */
+export const conferenceSchedule = {
+  year: 2026,
+  timezone: "Africa/Accra",
+  label: "7-8 November 2026",
+  timeLabel: "3:00 PM each day",
+  summary: "7-8 November 2026, 3:00 PM each day",
+  location: "The Temple of Charis, North Legon, 5th Pawpaw St.",
+  days: [
+    {
+      key: "saturday",
+      label: "Saturday",
+      dateLabel: "Saturday, 7 November 2026",
+      start: "2026-11-07T15:00:00",
+      end: "2026-11-07T20:00:00",
+    },
+    {
+      key: "sunday",
+      label: "Sunday",
+      dateLabel: "Sunday, 8 November 2026",
+      start: "2026-11-08T15:00:00",
+      end: "2026-11-08T20:00:00",
+    },
+  ],
+} as const;
+
 export const conferenceIntro =
   "The Unto a Perfect Man Conference (UPMC) is one of the landmark programs God has graciously blessed this commission with. UPMC seeks to bring us into the full and exact knowledge of Jesus Christ revealing His many identities and helping us discover our unique place in Him, so that we may live and express that identity fully.";
 
@@ -30,7 +56,7 @@ export const testimonials = [
   {
     name: "Mark",
     quote:
-      "Before UPMC 2025, my understanding of who Jesus is was somewhat confusing, even after reading passages like John 1. I often wrestled with the different titles applied to Him—such as Son of God, Word of God, and Child of God. Through the teaching at this conference, I gained clear understanding:",
+      "Before UPMC 2025, my understanding of who Jesus is was somewhat confusing, even after reading passages like John 1. I often wrestled with the different titles applied to Him, such as Son of God, Word of God, and Child of God. Through the teaching at this conference, I gained clear understanding:",
     emphasis: "Jesus is God and Jesus is the Word",
   },
   {

@@ -3,12 +3,12 @@ import Image from "next/image";
 import { Reveal, RevealGroup, RevealItem } from "@/components/motion";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { church } from "@/lib/content";
+import { church, conferenceSchedule } from "@/lib/content";
 import { RegisterForm } from "./register-form";
 
 export const metadata: Metadata = {
   title: "Register",
-  description: `Register for ${church.conference}.`,
+  description: `Register for ${church.conference}. ${conferenceSchedule.summary}.`,
 };
 
 export default function RegisterPage() {
@@ -45,8 +45,8 @@ export default function RegisterPage() {
             </RevealItem>
             <RevealItem>
               <p className="mt-5 hidden max-w-md text-lg leading-[1.25] tracking-[-0.03em] text-white/80 sm:block sm:text-xl">
-                {church.conference}. In person or online, Saturday, Sunday, or
-                both.
+                {church.conference}. {conferenceSchedule.summary}. In person or
+                online. Saturday, Sunday, or both.
               </p>
             </RevealItem>
           </RevealGroup>
