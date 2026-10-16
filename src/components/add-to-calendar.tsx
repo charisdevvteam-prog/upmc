@@ -1,5 +1,6 @@
 "use client";
 
+import { Calendar } from "lucide-react";
 import { btn } from "@/lib/btn";
 import { buildGoogleCalendarUrl } from "@/lib/calendar";
 
@@ -20,8 +21,9 @@ export function AddToCalendarButton() {
     <button
       type="button"
       onClick={onClick}
-      className={btn({ variant: "primary", size: "lg" })}
+      className={`gap-2 ${btn({ variant: "primary", size: "lg" })}`}
     >
+      <Calendar aria-hidden className="size-5 shrink-0" strokeWidth={1.75} />
       Add to calendar
     </button>
   );
