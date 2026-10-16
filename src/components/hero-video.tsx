@@ -3,116 +3,35 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
-const VIDEO_ID = "CG_g0Mu7eHQ";
-const TITLE_FADE_MS = 3000;
-
-type YTPlayer = {
-  mute(): void;
-  playVideo(): void;
-  seekTo(seconds: number, allowSeekAhead: boolean): void;
-  destroy(): void;
-};
-
-type YTNamespace = {
-  Player: new (
-    element: HTMLElement,
-    options: {
-      videoId: string;
-      host?: string;
-      playerVars?: Record<string, number | string>;
-      events?: {
-        onReady?: (event: { target: YTPlayer }) => void;
-        onStateChange?: (event: { data: number; target: YTPlayer }) => void;
-      };
-    },
-  ) => YTPlayer;
-};
-
-declare global {
-  interface Window {
-    YT?: YTNamespace;
-    onYouTubeIframeAPIReady?: () => void;
-  }
-}
-
-let apiPromise: Promise<YTNamespace> | undefined;
-
-function loadYouTubeApi() {
-  apiPromise ??= new Promise((resolve) => {
-    if (window.YT?.Player) return resolve(window.YT);
-    const previous = window.onYouTubeIframeAPIReady;
-    window.onYouTubeIframeAPIReady = () => {
-      previous?.();
-      resolve(window.YT!);
-    };
-    const script = document.createElement("script");
-    script.src = "https://www.youtube.com/iframe_api";
-    script.async = true;
-    document.head.appendChild(script);
-  });
-  return apiPromise;
-}
-
 export function HeroVideo() {
-  const mountRef = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    let player: YTPlayer | undefined;
-    let revealTimer: number | undefined;
-    let cancelled = false;
-    let hasPlayed = false;
+    const video = videoRef.current;
+    if (!video) return;
 
-    loadYouTubeApi().then((YT) => {
-      if (cancelled || !mountRef.current) return;
-      const target = document.createElement("div");
-      mountRef.current.appendChild(target);
-      player = new YT.Player(target, {
-        videoId: VIDEO_ID,
-        host: "https://www.youtube-nocookie.com",
-        playerVars: {
-          autoplay: 1,
-          mute: 1,
-          controls: 0,
-          rel: 0,
-          playsinline: 1,
-          disablekb: 1,
-          fs: 0,
-          iv_load_policy: 3,
-          modestbranding: 1,
-        },
-        events: {
-          onReady: ({ target }) => {
-            target.mute();
-            target.playVideo();
-          },
-          onStateChange: ({ data, target }) => {
-            window.clearTimeout(revealTimer);
-            if (data === 1) {
-              revealTimer = window.setTimeout(
-                () => setVisible(true),
-                hasPlayed ? 0 : TITLE_FADE_MS,
-              );
-              hasPlayed = true;
-            } else if (data === 0) {
-              setVisible(false);
-              target.seekTo(0, true);
-              target.playVideo();
-            } else if (data === 2) {
-              setVisible(false);
-              target.playVideo();
-            } else {
-              setVisible(false);
-            }
-          },
-        },
+    const markReady = () => setReady(true);
+    const keepPlaying = () => {
+      void video.play().catch(() => {
+        setReady(false);
       });
-    });
+    };
+
+    video.muted = true;
+    video.defaultMuted = true;
+    video.playsInline = true;
+
+    video.addEventListener("playing", markReady);
+    video.addEventListener("pause", keepPlaying);
+    video.addEventListener("ended", keepPlaying);
+
+    keepPlaying();
 
     return () => {
-      cancelled = true;
-      window.clearTimeout(revealTimer);
-      player?.destroy();
+      video.removeEventListener("playing", markReady);
+      video.removeEventListener("pause", keepPlaying);
+      video.removeEventListener("ended", keepPlaying);
     };
   }, []);
 
@@ -129,10 +48,19 @@ export function HeroVideo() {
         sizes="100vw"
         className="object-cover"
       />
-      <div
-        ref={mountRef}
+      <video
+        ref={videoRef}
         aria-hidden
-        className="pointer-events-none absolute [&_iframe]:h-full [&_iframe]:w-full [&_iframe]:border-0"
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        disablePictureInPicture
+        disableRemotePlayback
+        controls={false}
+        tabIndex={-1}
+        className="pointer-events-none absolute border-0"
         style={{
           top: "50%",
           left: "50%",
@@ -141,12 +69,15 @@ export function HeroVideo() {
           minWidth: "100%",
           minHeight: "100%",
           zIndex: 0,
-          opacity: visible ? 1 : 0,
+          objectFit: "cover",
+          opacity: ready ? 1 : 0,
           transition: "opacity 1.2s cubic-bezier(0.22, 1, 0.36, 1)",
           WebkitTransform: "translate(-50%, -50%) scale(1.25)",
           transform: "translate(-50%, -50%) scale(1.25)",
         }}
-      />
+      >
+        <source src="/videos/hero-upmc.mp4" type="video/mp4" />
+      </video>
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
