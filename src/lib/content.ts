@@ -3,7 +3,7 @@ export const church = {
   tagline: "Home of Love and Perfection",
   conference: "Unto a Perfect Man Conference",
   shortName: "UPMC",
-  email: "ttoc@gmail.com",
+  email: "charisdevvteam@gmail.com",
   phone: "+233 50 051 1393",
   address: "North Legon, 5th Pawpaw St.",
   mapsUrl:
@@ -44,8 +44,8 @@ export const churchAbout =
   "The Temple of Charis Worldwide is an assembly in the Body of Christ, commissioned by the Lord Jesus and led by our beloved man of God, Pastor Roy King Grace. As a grace-based ministry, we are ordained to connect the world to Christ and to raise people unto perfection, growing into the full expression of who we already are in Him. Jesus is our standard, and our aim is to reflect Him in every expression of our lives.";
 
 export const vision = "Connecting the world to Christ and raising men unto perfection.";
-export const mission = "Revealing the righteousness of God to man.";
-export const purpose = "Preaching the gospel to everyone in our sphere of contact.";
+export const purpose = "Revealing the righteousness of God to man.";
+export const mission = "Preaching the gospel to everyone in our sphere of contact.";
 
 export const testimonials = [
   {
